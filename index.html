@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Vitamin Checker</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#2B5D3F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Vitamins">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F7F1;
+    --panel:#FCFDFA;
+    --ink:#1B2B22;
+    --ink-soft:#5B6A5F;
+    --forest:#2B5D3F;
+    --forest-dim:#7FA98D;
+    --gold:#D9A441;
+    --berry:#B23A48;
+    --rule:#1B2B22;
+    --rule-thin:#D8DCD1;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Sans', sans-serif;
+    line-height:1.4;
+  }
+  .wrap{
+    max-width:1100px;
+    margin:0 auto;
+    padding:40px 24px 80px;
+  }
+  header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    border-bottom:3px solid var(--rule);
+    padding-bottom:18px;
+    margin-bottom:36px;
+    gap:20px;
+    flex-wrap:wrap;
+  }
+  h1{
+    font-family:'Fraunces', serif;
+    font-weight:500;
+    font-style:italic;
+    font-size:clamp(28px,4vw,40px);
+    margin:0;
+    color:var(--forest);
+  }
+  .tagline{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-top:6px;
+    max-width:380px;
+  }
+  #resetBtn{
+    background:none;
+    border:1px solid var(--ink);
+    color:var(--ink);
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:13px;
+    padding:9px 16px;
+    cursor:pointer;
+    transition:background .15s, color .15s;
+  }
+  #resetBtn:hover{ background:var(--ink); color:var(--panel); }
+  .header-actions{
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+  #installBtn{
+    background:var(--gold);
+    border:1px solid var(--gold);
+    color:var(--ink);
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:13px;
+    font-weight:600;
+    padding:9px 16px;
+    cursor:pointer;
+    transition:filter .15s;
+  }
+  #installBtn:hover{ filter:brightness(0.95); }
+
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1.15fr;
+    gap:40px;
+  }
+  @media (max-width:820px){
+    .grid{ grid-template-columns:1fr; }
+  }
+
+  .section-label{
+    font-size:12px;
+    letter-spacing:.02em;
+    color:var(--ink-soft);
+    margin-bottom:10px;
+  }
+
+  /* --- Left: search + log --- */
+  .search-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  input[type="text"], select{
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:15px;
+    padding:10px 12px;
+    border:1px solid var(--ink);
+    background:var(--panel);
+    color:var(--ink);
+    flex:1;
+    min-width:0;
+  }
+  input[type="text"]:focus, select:focus{
+    outline:2px solid var(--forest);
+    outline-offset:1px;
+  }
+  select{ flex:0 0 110px; }
+  #addBtn{
+    background:var(--forest);
+    color:var(--panel);
+    border:none;
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:15px;
+    font-weight:600;
+    padding:10px 18px;
+    cursor:pointer;
+  }
+  #addBtn:hover{ background:#204630; }
+  #addBtn:disabled{ background:#B7C4BB; cursor:not-allowed; }
+
+  .hint{
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-bottom:28px;
+  }
+
+  /* --- Camera scan --- */
+  .scan-row{
+    margin-bottom:8px;
+  }
+  .scan-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    border:1px dashed var(--forest);
+    color:var(--forest);
+    background:none;
+    font-size:14px;
+    font-weight:500;
+    padding:12px 16px;
+    cursor:pointer;
+    width:100%;
+    justify-content:center;
+    transition:background .15s;
+  }
+  .scan-btn:hover{ background:#EAF0EA; }
+  .scan-status{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-top:10px;
+    display:none;
+  }
+  .scan-status.show{ display:block; }
+  .scan-status.error{ color:var(--berry); }
+  .scan-card{
+    display:none;
+    margin-top:14px;
+    border:1px solid var(--ink);
+    background:var(--panel);
+  }
+  .scan-card.show{ display:flex; }
+  .scan-card img{
+    width:96px;
+    height:96px;
+    object-fit:cover;
+    display:block;
+    border-right:1px solid var(--ink);
+    flex-shrink:0;
+  }
+  .scan-card-body{
+    padding:12px 14px;
+    flex:1;
+    min-width:0;
+  }
+  .scan-card-name{
+    font-weight:600;
+    font-size:14.5px;
+  }
+  .scan-card-serving{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin-top:2px;
+  }
+  .scan-card-actions{
+    margin-top:10px;
+    display:flex;
+    gap:8px;
+  }
+  .scan-card-actions button{
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:12.5px;
+    padding:6px 12px;
+    cursor:pointer;
+    border:1px solid var(--ink);
+    background:none;
+    color:var(--ink);
+  }
+  .scan-card-actions button.primary{
+    background:var(--forest);
+    color:var(--panel);
+    border-color:var(--forest);
+  }
+  .scan-card-actions button.primary:hover{ background:#204630; }
+  .scan-card-actions button:hover{ background:#EEEEE7; }
+
+  .divider-or{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin:18px 0 16px;
+    color:var(--ink-soft);
+    font-size:12px;
+  }
+  .divider-or::before, .divider-or::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:var(--rule-thin);
+  }
+
+  #log{
+    list-style:none;
+    margin:0;
+    padding:0;
+    border-top:1px solid var(--rule-thin);
+  }
+  #log li{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:12px 2px;
+    border-bottom:1px solid var(--rule-thin);
+    font-size:14.5px;
+  }
+  #log li .food-name{ font-weight:500; }
+  #log li .food-serving{ color:var(--ink-soft); font-size:12.5px; margin-left:6px; }
+  #log li button{
+    background:none;
+    border:none;
+    color:var(--berry);
+    font-size:18px;
+    line-height:1;
+    cursor:pointer;
+    padding:2px 6px;
+  }
+  #emptyLog{
+    padding:24px 2px;
+    color:var(--ink-soft);
+    font-size:14px;
+    border-bottom:1px solid var(--rule-thin);
+    font-style:italic;
+  }
+
+  /* --- Right: nutrition-facts style panel --- */
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--ink);
+    padding:22px 24px 26px;
+  }
+  .panel-title{
+    font-family:'Fraunces', serif;
+    font-weight:600;
+    font-size:24px;
+    border-bottom:8px solid var(--ink);
+    padding-bottom:10px;
+    margin:0 0 4px;
+  }
+  .panel-sub{
+    font-size:12px;
+    color:var(--ink-soft);
+    border-bottom:1px solid var(--ink);
+    padding-bottom:10px;
+    margin-bottom:6px;
+  }
+  .vrow{
+    padding:10px 0;
+    border-bottom:1px solid var(--rule-thin);
+  }
+  .vrow:last-of-type{ border-bottom:1px solid var(--ink); }
+  .vrow-top{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    font-size:14.5px;
+    margin-bottom:6px;
+  }
+  .vrow-top .vname{ font-weight:600; }
+  .vrow-top .vpct{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:500;
+    font-size:14px;
+  }
+  .bar-track{
+    height:7px;
+    background:#E7E9E1;
+    width:100%;
+    position:relative;
+  }
+  .bar-fill{
+    height:100%;
+    background:var(--forest);
+    transition:width .3s ease;
+  }
+  .bar-fill.low{ background:var(--berry); }
+  .bar-fill.full{ background:var(--gold); }
+
+  .flags{
+    margin-top:28px;
+  }
+  .flags-title{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:19px;
+    color:var(--berry);
+    margin-bottom:10px;
+  }
+  .flag-item{
+    font-size:13.5px;
+    padding:10px 0;
+    border-bottom:1px solid var(--rule-thin);
+  }
+  .flag-item:last-child{ border-bottom:none; }
+  .flag-item b{ color:var(--berry); }
+  .flag-item .suggest{ color:var(--ink-soft); margin-top:3px; }
+  .all-good{
+    font-size:13.5px;
+    color:var(--forest);
+    padding:10px 0;
+  }
+  footer{
+    margin-top:48px;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    border-top:1px solid var(--rule-thin);
+    padding-top:16px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <h1>Vitamin Checker</h1>
+      <div class="tagline">Log what you eat today, watch your vitamin coverage fill in.</div>
+    </div>
+    <div class="header-actions">
+      <button id="installBtn" style="display:none;">Install app</button>
+      <button id="resetBtn">Reset today</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT: add + log -->
+    <div>
+      <div class="section-label">Scan a food</div>
+      <div class="scan-row">
+        <label class="scan-btn" for="cameraInput">📷 Take or upload a photo</label>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+      </div>
+      <div class="scan-status" id="scanStatus"></div>
+      <div class="scan-card" id="scanCard">
+        <img id="scanThumb" alt="Scanned food">
+        <div class="scan-card-body">
+          <div class="scan-card-name" id="scanName"></div>
+          <div class="scan-card-serving" id="scanServing"></div>
+          <div class="scan-card-actions">
+            <button class="primary" id="scanAddBtn">Add to log</button>
+            <button id="scanDiscardBtn">Discard</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="divider-or">or add manually</div>
+
+      <div class="search-row">
+        <input type="text" id="foodInput" list="foodList" placeholder="Type a food, e.g. spinach">
+        <datalist id="foodList"></datalist>
+        <select id="qtySelect">
+          <option value="0.5">½ serving</option>
+          <option value="1" selected>1 serving</option>
+          <option value="1.5">1½ servings</option>
+          <option value="2">2 servings</option>
+        </select>
+        <button id="addBtn" disabled>Add</button>
+      </div>
+      <div class="hint" id="foodHint">Start typing to see matches from the built-in food list.</div>
+
+      <div class="section-label">Today's log</div>
+      <ul id="log"></ul>
+      <li id="emptyLog" style="display:list-item; list-style:none;">Nothing logged yet — add your first food above.</li>
+    </div>
+
+    <!-- RIGHT: dashboard -->
+    <div class="panel">
+      <div class="panel-title">Today's Coverage</div>
+      <div class="panel-sub" id="foodCount">0 foods logged</div>
+      <div id="vitaminRows"></div>
+
+      <div class="flags" id="flagsBlock">
+        <div class="flags-title">Worth a look</div>
+        <div id="flagsList"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Percentages are rough estimates against general adult daily values, based on typical serving sizes — useful for everyday awareness, not medical or dietary advice. Individual needs vary; talk to a doctor or dietitian for personal guidance.
+  </footer>
+
+</div>
+
+<script>
+// ---------- Vitamin daily values (adult general reference) ----------
+const DV = {
+  A:  { label:"Vitamin A",  unit:"mcg", amount:900 },
+  C:  { label:"Vitamin C",  unit:"mg",  amount:90 },
+  D:  { label:"Vitamin D",  unit:"mcg", amount:20 },
+  E:  { label:"Vitamin E",  unit:"mg",  amount:15 },
+  K:  { label:"Vitamin K",  unit:"mcg", amount:120 },
+  B1: { label:"B1 (Thiamin)",   unit:"mg",  amount:1.2 },
+  B2: { label:"B2 (Riboflavin)",unit:"mg",  amount:1.3 },
+  B3: { label:"B3 (Niacin)",    unit:"mg",  amount:16 },
+  B6: { label:"B6",             unit:"mg",  amount:1.7 },
+  B9: { label:"Folate (B9)",    unit:"mcg", amount:400 },
+  B12:{ label:"B12",            unit:"mcg", amount:2.4 }
+};
+const V_ORDER = ["A","C","D","E","K","B1","B2","B3","B6","B9","B12"];
+
+// ---------- Food database: values per stated serving ----------
+// vitamins object matches DV keys; unlisted = 0
+const FOODS = [
+  {name:"Spinach (cooked)", serving:"1 cup", vitamins:{A:943,C:18,K:889,B9:263,B2:0.4,B6:0.4,E:3.7}},
+  {name:"Kale (raw)", serving:"1 cup", vitamins:{A:206,C:80,K:547,B6:0.2,B9:19}},
+  {name:"Carrot", serving:"1 medium", vitamins:{A:509,C:4,K:8,B6:0.1}},
+  {name:"Sweet potato (baked)", serving:"1 medium", vitamins:{A:1096,C:22,B6:0.6,B9:9,E:1.4}},
+  {name:"Broccoli (cooked)", serving:"1 cup", vitamins:{A:60,C:101,K:220,B9:168,B6:0.2}},
+  {name:"Bell pepper (red)", serving:"1 medium", vitamins:{A:117,C:152,B6:0.3,E:1.9}},
+  {name:"Tomato", serving:"1 medium", vitamins:{A:20,C:16,K:10,B9:15,E:0.7}},
+  {name:"Avocado", serving:"1/2 fruit", vitamins:{C:10,K:21,B6:0.2,B9:60,E:2.1}},
+  {name:"Cucumber", serving:"1 cup", vitamins:{C:3,K:10}},
+  {name:"Cauliflower (cooked)", serving:"1 cup", vitamins:{C:55,K:17,B9:55,B6:0.2}},
+  {name:"Brussels sprouts (cooked)", serving:"1 cup", vitamins:{A:30,C:97,K:218,B9:94,B6:0.3}},
+  {name:"Asparagus (cooked)", serving:"1 cup", vitamins:{A:60,C:14,K:91,B9:134,B6:0.1}},
+  {name:"Mushrooms (cooked)", serving:"1 cup", vitamins:{D:0.4,B2:0.5,B3:7,B6:0.2}},
+  {name:"Potato (baked, with skin)", serving:"1 medium", vitamins:{C:17,B6:0.5,B3:2.4,B9:48}},
+  {name:"Corn", serving:"1 cup", vitamins:{A:16,C:10,B1:0.2,B9:76}},
+  {name:"Peas (cooked)", serving:"1 cup", vitamins:{A:107,C:58,K:41,B1:0.4,B9:101}},
+  {name:"Orange", serving:"1 medium", vitamins:{A:14,C:70,B9:40,B1:0.1}},
+  {name:"Banana", serving:"1 medium", vitamins:{C:10,B6:0.4,B9:24}},
+  {name:"Apple", serving:"1 medium", vitamins:{C:8,K:4}},
+  {name:"Strawberries", serving:"1 cup", vitamins:{C:89,B9:36,K:3}},
+  {name:"Blueberries", serving:"1 cup", vitamins:{C:14,K:29}},
+  {name:"Mango", serving:"1 cup", vitamins:{A:89,C:60,B6:0.2,B9:71}},
+  {name:"Pineapple", serving:"1 cup", vitamins:{C:79,B1:0.1,B6:0.2}},
+  {name:"Kiwi", serving:"1 fruit", vitamins:{C:64,K:28,E:1.1}},
+  {name:"Grapes", serving:"1 cup", vitamins:{C:4,K:14}},
+  {name:"Watermelon", serving:"1 cup", vitamins:{A:43,C:12,B6:0.1}},
+  {name:"Papaya", serving:"1 cup", vitamins:{A:82,C:87,B9:53}},
+  {name:"Cantaloupe", serving:"1 cup", vitamins:{A:270,C:59}},
+  {name:"Salmon (cooked)", serving:"100g", vitamins:{D:11,B12:2.8,B3:8.5,B6:0.6,E:1.1}},
+  {name:"Tuna (cooked)", serving:"100g", vitamins:{D:2,B12:2.2,B3:19,B6:0.9}},
+  {name:"Sardines (canned)", serving:"100g", vitamins:{D:4.8,B12:8.9,B3:5.2,B2:0.2}},
+  {name:"Shrimp (cooked)", serving:"100g", vitamins:{B12:1.2,B3:2.6,D:0.1}},
+  {name:"Egg", serving:"1 large", vitamins:{A:75,D:1.1,B12:0.6,B2:0.2,B9:24,E:0.5}},
+  {name:"Chicken breast (cooked)", serving:"100g", vitamins:{B3:14.8,B6:0.6,B12:0.3}},
+  {name:"Beef (lean, cooked)", serving:"100g", vitamins:{B12:2.6,B3:4.8,B6:0.4,B2:0.2}},
+  {name:"Pork (cooked)", serving:"100g", vitamins:{B1:0.7,B3:5.4,B6:0.4,B12:0.7}},
+  {name:"Liver (beef, cooked)", serving:"100g", vitamins:{A:6582,B12:59.3,B2:2.8,B9:145,B3:14.9}},
+  {name:"Milk (whole)", serving:"1 cup", vitamins:{A:112,D:3.2,B12:1.1,B2:0.4}},
+  {name:"Yogurt (plain)", serving:"1 cup", vitamins:{B12:1.4,B2:0.6,D:0.1}},
+  {name:"Cheese (cheddar)", serving:"1 oz", vitamins:{A:75,B12:0.2,B2:0.1}},
+  {name:"Tofu", serving:"100g", vitamins:{A:0,C:0.1,K:2,B1:0.1,B6:0.1}},
+  {name:"Lentils (cooked)", serving:"1 cup", vitamins:{B1:0.3,B6:0.4,B9:358,B3:2.1}},
+  {name:"Chickpeas (cooked)", serving:"1 cup", vitamins:{B6:0.5,B9:282,B1:0.2}},
+  {name:"Black beans (cooked)", serving:"1 cup", vitamins:{B1:0.4,B9:256,B6:0.1}},
+  {name:"Almonds", serving:"1 oz (23 nuts)", vitamins:{E:7.3,B2:0.3}},
+  {name:"Walnuts", serving:"1 oz (14 halves)", vitamins:{E:0.2,B6:0.2,B9:28}},
+  {name:"Sunflower seeds", serving:"1 oz", vitamins:{E:10.3,B1:0.6,B6:0.2,B9:70}},
+  {name:"Brown rice (cooked)", serving:"1 cup", vitamins:{B1:0.2,B3:3,B6:0.3}},
+  {name:"Oats (cooked)", serving:"1 cup", vitamins:{B1:0.3,B9:14,B6:0.1}},
+  {name:"Whole wheat bread", serving:"1 slice", vitamins:{B1:0.1,B3:1.4,B9:26}},
+  {name:"Fortified cereal", serving:"1 cup", vitamins:{D:2,B12:1.5,B6:0.5,B9:200,B1:0.5,B2:0.5,B3:5}},
+  {name:"Plant milk (fortified)", serving:"1 cup", vitamins:{D:2.9,A:150,B12:1.2}},
+  {name:"Sun exposure note: none — foods only", serving:"—", vitamins:{}}
+];
+// remove the placeholder note item
+FOODS.pop();
+
+// ---------- State ----------
+let log = []; // {id, food, qty}
+let nextId = 1;
+
+// ---------- Populate datalist ----------
+const foodListEl = document.getElementById("foodList");
+FOODS.forEach(f=>{
+  const opt = document.createElement("option");
+  opt.value = f.name;
+  foodListEl.appendChild(opt);
+});
+
+// ---------- DOM refs ----------
+const foodInput = document.getElementById("foodInput");
+const qtySelect = document.getElementById("qtySelect");
+const addBtn = document.getElementById("addBtn");
+const foodHint = document.getElementById("foodHint");
+const logEl = document.getElementById("log");
+const emptyLog = document.getElementById("emptyLog");
+const foodCount = document.getElementById("foodCount");
+const vitaminRows = document.getElementById("vitaminRows");
+const flagsList = document.getElementById("flagsList");
+const resetBtn = document.getElementById("resetBtn");
+const cameraInput = document.getElementById("cameraInput");
+const scanStatus = document.getElementById("scanStatus");
+const scanCard = document.getElementById("scanCard");
+const scanThumb = document.getElementById("scanThumb");
+const scanName = document.getElementById("scanName");
+const scanServing = document.getElementById("scanServing");
+const scanAddBtn = document.getElementById("scanAddBtn");
+const scanDiscardBtn = document.getElementById("scanDiscardBtn");
+let pendingScanFood = null;
+
+function findFood(name){
+  return FOODS.find(f => f.name.toLowerCase() === name.trim().toLowerCase());
+}
+
+foodInput.addEventListener("input", ()=>{
+  const match = findFood(foodInput.value);
+  addBtn.disabled = !match;
+  foodHint.textContent = match
+    ? `${match.name} — ${match.serving}`
+    : "Start typing to see matches from the built-in food list.";
+});
+
+foodInput.addEventListener("keydown", (e)=>{
+  if(e.key === "Enter" && !addBtn.disabled) addFood();
+});
+addBtn.addEventListener("click", addFood);
+
+function addFood(){
+  const match = findFood(foodInput.value);
+  if(!match) return;
+  log.push({ id: nextId++, food: match, qty: parseFloat(qtySelect.value) });
+  foodInput.value = "";
+  addBtn.disabled = true;
+  foodHint.textContent = "Start typing to see matches from the built-in food list.";
+  foodInput.focus();
+  render();
+}
+
+function removeFood(id){
+  log = log.filter(item => item.id !== id);
+  render();
+}
+
+resetBtn.addEventListener("click", ()=>{
+  if(log.length === 0) return;
+  if(confirm("Clear today's log?")){
+    log = [];
+    render();
+  }
+});
+
+// ---------- Camera scan ----------
+function setScanStatus(msg, isError){
+  scanStatus.textContent = msg;
+  scanStatus.classList.toggle("show", !!msg);
+  scanStatus.classList.toggle("error", !!isError);
+}
+
+function hideScanCard(){
+  scanCard.classList.remove("show");
+  pendingScanFood = null;
+}
+
+// Downscale the photo so the API call stays fast and light.
+function resizeImage(file, maxDim){
+  return new Promise((resolve, reject)=>{
+    const img = new Image();
+    const reader = new FileReader();
+    reader.onload = ()=>{ img.src = reader.result; };
+    reader.onerror = reject;
+    img.onload = ()=>{
+      let { width, height } = img;
+      if(width > height && width > maxDim){
+        height = Math.round(height * (maxDim / width));
+        width = maxDim;
+      } else if(height > maxDim){
+        width = Math.round(width * (maxDim / height));
+        height = maxDim;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      canvas.getContext("2d").drawImage(img, 0, 0, width, height);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+      resolve({ dataUrl, base64: dataUrl.split(",")[1] });
+    };
+    img.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+cameraInput.addEventListener("change", async ()=>{
+  const file = cameraInput.files[0];
+  if(!file) return;
+  hideScanCard();
+  setScanStatus("Analyzing your photo…", false);
+
+  try{
+    const { dataUrl, base64 } = await resizeImage(file, 800);
+    const result = await identifyFoodFromImage(base64);
+
+    if(!result || !result.foodName){
+      setScanStatus("Couldn't identify a food in that photo — try again or add it manually below.", true);
+      cameraInput.value = "";
+      return;
+    }
+
+    let scannedFood;
+    const matched = result.matchedDbName ? findFood(result.matchedDbName) : null;
+    if(matched){
+      scannedFood = {
+        food: matched,
+        qty: result.qtyMultiplier && result.qtyMultiplier > 0 ? result.qtyMultiplier : 1,
+        servingLabel: result.servingDescription || matched.serving
+      };
+    } else if(result.vitamins){
+      scannedFood = {
+        food: { name: result.foodName, serving: result.servingDescription || "estimated serving", vitamins: result.vitamins },
+        qty: 1,
+        servingLabel: result.servingDescription || "estimated serving"
+      };
+    } else {
+      setScanStatus("Identified the food but couldn't estimate its vitamins — try adding it manually below.", true);
+      cameraInput.value = "";
+      return;
+    }
+
+    pendingScanFood = scannedFood;
+    scanThumb.src = dataUrl;
+    scanName.textContent = result.foodName;
+    scanServing.textContent = scannedFood.servingLabel;
+    scanCard.classList.add("show");
+    setScanStatus("", false);
+  } catch(err){
+    console.error(err);
+    setScanStatus("Something went wrong analyzing that photo — try again or add it manually below.", true);
+  } finally {
+    cameraInput.value = "";
+  }
+});
+
+scanAddBtn.addEventListener("click", ()=>{
+  if(!pendingScanFood) return;
+  log.push({ id: nextId++, food: pendingScanFood.food, qty: pendingScanFood.qty });
+  hideScanCard();
+  render();
+});
+
+scanDiscardBtn.addEventListener("click", hideScanCard);
+
+async function identifyFoodFromImage(base64){
+  const dbNames = FOODS.map(f=>f.name).join(", ");
+  const prompt = `Look at this food photo. Identify the single most prominent food item and estimate the serving size visible.
+
+Reference list of known foods (prefer matching to one of these if it's a close match): ${dbNames}
+
+Respond with ONLY minified JSON, no markdown fences, no commentary, in exactly this shape:
+{"foodName": string or null, "matchedDbName": string or null, "qtyMultiplier": number, "servingDescription": string or null, "vitamins": null or {"A":number,"C":number,"D":number,"E":number,"K":number,"B1":number,"B2":number,"B3":number,"B6":number,"B9":number,"B12":number}}
+
+Rules:
+- If the image does not clearly show food, set every field to null.
+- "qtyMultiplier" is relative to the matched food's normal serving (1 = a normal single serving), based on the portion visible.
+- If the food closely matches an item in the reference list, set "matchedDbName" to that exact name and set "vitamins" to null.
+- If it does NOT match anything in the list, set "matchedDbName" to null and instead fill "vitamins" with your own best estimate for the visible portion, using mcg for A/D/K/B9/B12 and mg for C/E/B1/B2/B3/B6.
+- "servingDescription" should be a short phrase like "1 medium banana" or "about 1 cup".`;
+
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: 1000,
+      messages: [{
+        role: "user",
+        content: [
+          { type: "image", source: { type: "base64", media_type: "image/jpeg", data: base64 } },
+          { type: "text", text: prompt }
+        ]
+      }]
+    })
+  });
+
+  const data = await response.json();
+  const textBlock = (data.content || []).find(b => b.type === "text");
+  if(!textBlock) throw new Error("No text response from analysis");
+  const clean = textBlock.text.replace(/```json|```/g, "").trim();
+  return JSON.parse(clean);
+}
+
+// ---------- Rendering ----------
+function render(){
+  // log list
+  logEl.innerHTML = "";
+  emptyLog.style.display = log.length ? "none" : "list-item";
+  log.forEach(item=>{
+    const li = document.createElement("li");
+    const qtyLabel = item.qty === 1 ? item.food.serving : `${item.qty}× ${item.food.serving}`;
+    li.innerHTML = `<span><span class="food-name">${item.food.name}</span><span class="food-serving">${qtyLabel}</span></span>`;
+    const btn = document.createElement("button");
+    btn.textContent = "×";
+    btn.title = "Remove";
+    btn.addEventListener("click", ()=>removeFood(item.id));
+    li.appendChild(btn);
+    logEl.appendChild(li);
+  });
+  foodCount.textContent = `${log.length} food${log.length===1?"":"s"} logged`;
+
+  // totals
+  const totals = {};
+  V_ORDER.forEach(k=>totals[k]=0);
+  log.forEach(item=>{
+    V_ORDER.forEach(k=>{
+      const val = item.food.vitamins[k] || 0;
+      totals[k] += val * item.qty;
+    });
+  });
+
+  // vitamin rows
+  vitaminRows.innerHTML = "";
+  const low = [];
+  V_ORDER.forEach(k=>{
+    const dv = DV[k];
+    const pct = Math.min(999, Math.round((totals[k] / dv.amount) * 100));
+    const barPct = Math.min(100, pct);
+    const row = document.createElement("div");
+    row.className = "vrow";
+    let barClass = "";
+    if(pct >= 100) barClass = "full";
+    else if(pct < 40) barClass = "low";
+    row.innerHTML = `
+      <div class="vrow-top">
+        <span class="vname">${dv.label}</span>
+        <span class="vpct">${pct}%</span>
+      </div>
+      <div class="bar-track"><div class="bar-fill ${barClass}" style="width:${barPct}%"></div></div>
+    `;
+    vitaminRows.appendChild(row);
+    if(log.length > 0 && pct < 40) low.push({key:k, pct, label:dv.label});
+  });
+
+  // flags
+  flagsList.innerHTML = "";
+  if(log.length === 0){
+    flagsList.innerHTML = `<div class="all-good">Add a few foods to see where you stand.</div>`;
+  } else if(low.length === 0){
+    flagsList.innerHTML = `<div class="all-good">Nothing critically low — nice spread today.</div>`;
+  } else {
+    low.sort((a,b)=>a.pct-b.pct).forEach(item=>{
+      const loggedNames = new Set(log.map(l=>l.food.name));
+      const suggestions = FOODS
+        .filter(f => (f.vitamins[item.key] || 0) > 0 && !loggedNames.has(f.name))
+        .sort((a,b)=> (b.vitamins[item.key]||0) - (a.vitamins[item.key]||0))
+        .slice(0,3)
+        .map(f=>f.name);
+      const div = document.createElement("div");
+      div.className = "flag-item";
+      div.innerHTML = `<b>${item.label}</b> — only ${item.pct}% covered.
+        ${suggestions.length ? `<div class="suggest">Try: ${suggestions.join(", ")}</div>` : ""}`;
+      flagsList.appendChild(div);
+    });
+  }
+}
+
+render();
+
+// ---------- PWA: install + offline support ----------
+if("serviceWorker" in navigator){
+  window.addEventListener("load", ()=>{
+    navigator.serviceWorker.register("service-worker.js").catch(()=>{});
+  });
+}
+
+let deferredInstallPrompt = null;
+const installBtn = document.getElementById("installBtn");
+
+window.addEventListener("beforeinstallprompt", (e)=>{
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  installBtn.style.display = "inline-block";
+});
+
+installBtn.addEventListener("click", async ()=>{
+  if(!deferredInstallPrompt) return;
+  deferredInstallPrompt.prompt();
+  await deferredInstallPrompt.userChoice;
+  deferredInstallPrompt = null;
+  installBtn.style.display = "none";
+});
+
+window.addEventListener("appinstalled", ()=>{
+  installBtn.style.display = "none";
+});
+</script>
+</body>
+</html>
