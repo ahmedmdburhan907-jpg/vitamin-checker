@@ -2,7 +2,7 @@
   "name": "Vitamin Checker",
   "short_name": "Vitamins",
   "description": "Log what you eat and track your daily vitamin coverage — with photo scanning.",
-  "start_url": "./index.html",
+  "start_url": "./food-vitamin-checker.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#F6F7F1",

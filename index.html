@@ -92,6 +92,128 @@
   }
   #installBtn:hover{ filter:brightness(0.95); }
 
+  #premiumBtn{
+    background:none;
+    border:1px solid var(--gold);
+    color:var(--ink);
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:13px;
+    font-weight:600;
+    padding:9px 16px;
+    cursor:pointer;
+  }
+  #premiumBtn:hover{ background:#FBF1DC; }
+
+  .modal-backdrop{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(27,43,34,0.45);
+    z-index:50;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .modal-backdrop.show{ display:flex; }
+  .modal{
+    background:var(--panel);
+    border:1px solid var(--ink);
+    max-width:380px;
+    width:100%;
+    padding:26px 26px 24px;
+    position:relative;
+  }
+  .modal-close{
+    position:absolute;
+    top:14px;
+    right:16px;
+    background:none;
+    border:none;
+    font-size:20px;
+    cursor:pointer;
+    color:var(--ink-soft);
+    line-height:1;
+  }
+  .modal h2{
+    font-family:'Fraunces', serif;
+    font-style:italic;
+    font-weight:500;
+    font-size:22px;
+    margin:0 0 6px;
+    color:var(--forest);
+  }
+  .modal-price{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:15px;
+    margin-bottom:14px;
+    color:var(--ink);
+  }
+  .modal ul{
+    margin:0 0 20px;
+    padding-left:18px;
+    font-size:13.5px;
+    color:var(--ink-soft);
+  }
+  .modal ul li{ margin-bottom:5px; }
+  .pay-btn{
+    display:block;
+    text-align:center;
+    background:var(--forest);
+    color:var(--panel);
+    text-decoration:none;
+    font-weight:600;
+    font-size:14.5px;
+    padding:12px;
+    margin-bottom:18px;
+  }
+  .pay-btn:hover{ background:#204630; }
+  .modal-divider{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin:4px 0 14px;
+    color:var(--ink-soft);
+    font-size:12px;
+  }
+  .modal-divider::before, .modal-divider::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:var(--rule-thin);
+  }
+  .unlock-row{
+    display:flex;
+    gap:8px;
+  }
+  .unlock-row input{
+    flex:1;
+    min-width:0;
+    font-family:'IBM Plex Sans',sans-serif;
+    font-size:14px;
+    padding:9px 10px;
+    border:1px solid var(--ink);
+  }
+  .unlock-row button{
+    background:none;
+    border:1px solid var(--ink);
+    padding:9px 14px;
+    font-size:13.5px;
+    cursor:pointer;
+  }
+  .unlock-row button:hover{ background:var(--ink); color:var(--panel); }
+  .modal-msg{
+    font-size:12.5px;
+    margin-top:10px;
+  }
+  .modal-msg.success{ color:var(--forest); }
+  .modal-msg.error{ color:var(--berry); }
+  .plan-badge{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:4px;
+  }
+  .plan-badge.premium{ color:var(--forest); font-weight:600; }
+
   .grid{
     display:grid;
     grid-template-columns:1fr 1.15fr;
@@ -168,6 +290,13 @@
     transition:background .15s;
   }
   .scan-btn:hover{ background:#EAF0EA; }
+  .scan-btn.disabled{
+    border-style:solid;
+    border-color:var(--rule-thin);
+    color:var(--ink-soft);
+    cursor:not-allowed;
+  }
+  .scan-btn.disabled:hover{ background:none; }
   .scan-status{
     font-size:12.5px;
     color:var(--ink-soft);
@@ -368,8 +497,10 @@
     <div>
       <h1>Vitamin Checker</h1>
       <div class="tagline">Log what you eat today, watch your vitamin coverage fill in.</div>
+      <div class="plan-badge" id="planBadge" style="display:none;">Free plan — 3 photo scans included</div>
     </div>
     <div class="header-actions">
+      <button id="premiumBtn" style="display:none;">✨ Premium</button>
       <button id="installBtn" style="display:none;">Install app</button>
       <button id="resetBtn">Reset today</button>
     </div>
@@ -380,8 +511,8 @@
     <div>
       <div class="section-label">Scan a food</div>
       <div class="scan-row">
-        <label class="scan-btn" for="cameraInput">📷 Take or upload a photo</label>
-        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+        <label class="scan-btn" id="scanBtnLabel" for="cameraInput">📷 Photo scan — coming soon</label>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none" disabled>
       </div>
       <div class="scan-status" id="scanStatus"></div>
       <div class="scan-card" id="scanCard">
@@ -433,6 +564,25 @@
     Percentages are rough estimates against general adult daily values, based on typical serving sizes — useful for everyday awareness, not medical or dietary advice. Individual needs vary; talk to a doctor or dietitian for personal guidance.
   </footer>
 
+</div>
+
+<div class="modal-backdrop" id="premiumModal">
+  <div class="modal">
+    <button class="modal-close" id="modalCloseBtn">×</button>
+    <h2>Go Premium</h2>
+    <div class="modal-price">৳100 / month</div>
+    <ul>
+      <li>Unlimited photo scans (free plan: 3 total)</li>
+      <li>Priority support</li>
+    </ul>
+    <a href="#" id="payLink" class="pay-btn" target="_blank" rel="noopener">Pay with Stripe</a>
+    <div class="modal-divider">already paid?</div>
+    <div class="unlock-row">
+      <input type="text" id="unlockInput" placeholder="Enter your unlock code">
+      <button id="unlockBtn">Unlock</button>
+    </div>
+    <div class="modal-msg" id="modalMsg"></div>
+  </div>
 </div>
 
 <script>
@@ -536,6 +686,9 @@ const vitaminRows = document.getElementById("vitaminRows");
 const flagsList = document.getElementById("flagsList");
 const resetBtn = document.getElementById("resetBtn");
 const cameraInput = document.getElementById("cameraInput");
+const scanBtnLabel = document.getElementById("scanBtnLabel");
+scanBtnLabel.classList.add("disabled");
+scanBtnLabel.addEventListener("click", (e)=>{ e.preventDefault(); });
 const scanStatus = document.getElementById("scanStatus");
 const scanCard = document.getElementById("scanCard");
 const scanThumb = document.getElementById("scanThumb");
@@ -544,6 +697,72 @@ const scanServing = document.getElementById("scanServing");
 const scanAddBtn = document.getElementById("scanAddBtn");
 const scanDiscardBtn = document.getElementById("scanDiscardBtn");
 let pendingScanFood = null;
+
+// ---------- Premium / payment ----------
+// EDIT THESE TWO LINES with your own values before publishing:
+const STRIPE_PAYMENT_LINK = "https://buy.stripe.com/REPLACE_WITH_YOUR_LINK"; // your Stripe Payment Link URL
+const UNLOCK_CODE = "VITAMIN2026"; // pick any code; set Stripe's post-payment redirect to:  yoursite.com?unlock=VITAMIN2026
+
+const FREE_SCAN_LIMIT = 3;
+let isPremium = false;
+let scanCount = 0;
+
+const premiumBtn = document.getElementById("premiumBtn");
+const premiumModal = document.getElementById("premiumModal");
+const modalCloseBtn = document.getElementById("modalCloseBtn");
+const payLink = document.getElementById("payLink");
+const unlockInput = document.getElementById("unlockInput");
+const unlockBtn = document.getElementById("unlockBtn");
+const modalMsg = document.getElementById("modalMsg");
+const planBadge = document.getElementById("planBadge");
+
+payLink.href = STRIPE_PAYMENT_LINK;
+
+function openPremiumModal(){ premiumModal.classList.add("show"); }
+function closePremiumModal(){ premiumModal.classList.remove("show"); modalMsg.textContent = ""; }
+
+premiumBtn.addEventListener("click", openPremiumModal);
+modalCloseBtn.addEventListener("click", closePremiumModal);
+premiumModal.addEventListener("click", (e)=>{ if(e.target === premiumModal) closePremiumModal(); });
+
+function tryUnlock(code){
+  if(code.trim() === UNLOCK_CODE){
+    isPremium = true;
+    updatePlanBadge();
+    modalMsg.textContent = "Unlocked — enjoy unlimited scans!";
+    modalMsg.className = "modal-msg success";
+    return true;
+  }
+  modalMsg.textContent = "That code doesn't match — check it and try again.";
+  modalMsg.className = "modal-msg error";
+  return false;
+}
+
+unlockBtn.addEventListener("click", ()=> tryUnlock(unlockInput.value));
+unlockInput.addEventListener("keydown", (e)=>{ if(e.key === "Enter") tryUnlock(unlockInput.value); });
+
+function updatePlanBadge(){
+  if(isPremium){
+    planBadge.textContent = "Premium — unlimited scans";
+    planBadge.classList.add("premium");
+  } else {
+    const left = Math.max(0, FREE_SCAN_LIMIT - scanCount);
+    planBadge.textContent = `Free plan — ${left} photo scan${left===1?"":"s"} left`;
+    planBadge.classList.remove("premium");
+  }
+}
+
+// Auto-unlock if the page was opened with ?unlock=CODE (set this as the
+// Stripe Payment Link's after-payment redirect URL).
+(function checkUrlUnlock(){
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("unlock");
+  if(code && code === UNLOCK_CODE){
+    isPremium = true;
+  }
+  updatePlanBadge();
+})();
+
 
 function findFood(name){
   return FOODS.find(f => f.name.toLowerCase() === name.trim().toLowerCase());
@@ -629,12 +848,20 @@ function resizeImage(file, maxDim){
 cameraInput.addEventListener("change", async ()=>{
   const file = cameraInput.files[0];
   if(!file) return;
+
+  if(!isPremium && scanCount >= FREE_SCAN_LIMIT){
+    cameraInput.value = "";
+    openPremiumModal();
+    return;
+  }
+
   hideScanCard();
   setScanStatus("Analyzing your photo…", false);
 
   try{
     const { dataUrl, base64 } = await resizeImage(file, 800);
     const result = await identifyFoodFromImage(base64);
+    if(!isPremium){ scanCount++; updatePlanBadge(); }
 
     if(!result || !result.foodName){
       setScanStatus("Couldn't identify a food in that photo — try again or add it manually below.", true);

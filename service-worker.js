@@ -1,6 +1,6 @@
 const CACHE_NAME = "vitamin-checker-v1";
 const APP_SHELL = [
-  "./index.html",
+  "./food-vitamin-checker.html",
   "./manifest.json",
   "./icon-192.png",
   "./icon-512.png"
